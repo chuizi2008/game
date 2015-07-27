@@ -104,6 +104,7 @@ io.on('connection', function(socket)
 	
 	socket.on('login', function(obj)
 	{
+		console.log("account:" + obj.AccountID + "|LoginKey:" + obj.LoginKey);
 		if (obj.AccountID == null || obj.LoginKey == null)
 		{
 			console.log("obj.AccountID == null || obj.LoginKey == null");
