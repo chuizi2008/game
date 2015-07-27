@@ -1,0 +1,5 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" /> 
+<form action="/CreateAccount" enctype="multipart/form-data" method="post">
+<input type="text" name="account" />
+<input type="submit" value="ok" />
+</form>
