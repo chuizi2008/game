@@ -3,26 +3,43 @@
     util = require('util'),
 	fs = require('fs');
 
+var OtherManager = require("./Manager/OtherManager");
+var FileManager = require("./Manager/FileManager");
+
 var redis = require("./util/util_cache");
-var hashTable = [];   // 声明对象
-hashTable["/CreateAccount"] = require("./js/CreateAccount");
-hashTable["/CreateFight"] = require("./js/CreateFight");
-hashTable["/Main"] = require("./js/Main");
 
 // 初始化战斗模块
 var fight = require("./fight/index");
 
+// 初始化数据库连接部分
 redis.ConnectRedis("192.168.0.35", 6379, function (){
 });
+
+// 加载所有页面模块
+var hashTable = OtherManager.FindJSInDirectory('./js');
 
 //用http模块创建一个http服务端 
 http.createServer(function(req, res) 
 {
 	try
 	{
+		if (req.url == "/favicon.ico")
+			return;
+		
+		// 最开始是管理器部分
 		if (req.url == "/")
 		{
 			hashTable["/CreateAccount"].Send(res);
+			return;
+		}
+		else if (req.url == "/UpFile")
+		{
+			FileManager.UpFile(req, res);
+			return;
+		}
+		else if (req.url.indexOf("/GetFile=") >= 0 )
+		{
+			FileManager.GetFile(req, res);
 			return;
 		}
 		
