@@ -1,0 +1,59 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" /> 
+<meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+<title>选择战斗环境</title>
+
+<script language="JavaScript" type="text/javascript">
+
+//读取cookies 
+function getCookie(name) 
+{ 
+    var arr,reg=new RegExp("(^| )"+name+"=([^;]*)(;|$)");
+	
+    if (arr=document.cookie.match(reg))
+        return unescape(arr[2]); 
+    else 
+        return null; 
+} 
+
+function load() 
+{
+document.getElementById("Account").value = getCookie("AccountID");
+document.getElementById("Password").value = getCookie("LoginKey");
+}
+</script>
+
+</head>
+
+<body onload="load();">
+<a href="http://192.168.1.191:2008">切换帐号</a>
+<form action="/CreateRole" enctype="multipart/form-data" method="post">
+	<hr />
+  <hr />
+  <hr />
+  <p>Cookie</p>
+  <p>	帐号:
+    <input type="text" id = "Account" readonly='readonly' name="Account" />
+  KEY:
+    <input type="text" id = "Password" readonly='readonly' name="Password" />
+</p>
+  <hr />
+  <hr />
+  <hr />
+  <p>职业
+    <select name="Occupation" id = "Occupation">
+		<option value ="lr">猎人</option>
+  		<option value ="zs">战士</option>
+    </select>
+  </p>
+  <hr />
+  <hr />
+  <hr />
+  <p>
+    <input type="submit" name="Submit" value="提交" />
+  </p>
+</form>
+</body>
+</html>

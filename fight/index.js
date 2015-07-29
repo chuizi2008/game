@@ -6,6 +6,15 @@ var io = require('socket.io')(http);
 var lua = require('./hello.node');
 var redis = require("../util/util_cache");
 
+function DisconnectAccount(account)
+{
+	if (socketTable[account] != null)
+	{
+		socketTable[account].disconnect();
+		socketTable[account] = null;
+	}
+}
+
 function RefreshScript()
 {
 	if (!lua.DoFile('./fight/LuaScripts/Main.lua', function(info){ console.log(info); })) return 0;
@@ -77,7 +86,7 @@ io.on('connection', function(socket)
 			}
 		});
 			
-		lua.DoFun(luafun, socket.roleObj.account);
+		lua.DoFun(luafun, socket.roleObj.Account);
 		socket.MyInterval = setInterval(socket.SendMsgList, 1000);
 	}
 	
@@ -131,21 +140,20 @@ io.on('connection', function(socket)
 			var roleObj = JSON.parse(responseObj);
 					
 			// 判断登录标记
-			if (roleObj.account != obj.AccountID || roleObj.LoginKey != obj.LoginKey)
+			if (roleObj.Account != obj.AccountID || roleObj.LoginKey != obj.LoginKey)
 			{
 				console.log("Account: " + obj.Account + "  LoginKey err");
 				return;
 			}
 			
-			if (socketTable[roleObj.account] != null)
-				socketTable[roleObj.account].disconnect();
+			DisconnectAccount(roleObj.Account);
 			
-			socketTable[roleObj.account] = socket;
+			socketTable[roleObj.Account] = socket;
 			
 			socket.roleObj = roleObj;
 		
-			socket.broadcast.emit('broadcast message', {content:'AccountID:' + roleObj.account + '进入游戏'});
-			console.log('login AccountID:' + roleObj.account + '       LoginKey:' + roleObj.LoginKey);
+			socket.broadcast.emit('broadcast message', {content:'AccountID:' + roleObj.Account + '进入游戏'});
+			console.log('login AccountID:' + roleObj.Account + '       LoginKey:' + roleObj.LoginKey);
 			socket.emit('loginRet', {content:"Y"});
 		});
 	});
@@ -164,7 +172,7 @@ io.on('connection', function(socket)
 	{
 		RefreshScript();
 		
-		console.log(socket.roleObj.account + 'RefreshScript');
+		console.log(socket.roleObj.Account + 'RefreshScript');
 		socket.emit('Err', {info:"RefreshScript"});
 		socket.emit('ScanEnd');
 	});
@@ -181,3 +189,5 @@ io.on('connection', function(socket)
 http.listen(8088, "0.0.0.0", function(){
     console.log('FightServer listening on *:8088');
 });
+
+exports.DisconnectAccount = DisconnectAccount;

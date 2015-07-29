@@ -1,0 +1,55 @@
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" /> 
+<script type="text/javascript" src="GetFileEX=md5.js"></script>
+<script language="JavaScript" type="text/javascript">
+function checkform()
+{
+	var account = document.getElementById("Account");
+	var password = document.getElementById("Password");
+	var password1 = document.getElementById("Password1");
+	
+	if (account.value == "")
+	{
+		alert("帐号不能为空");
+		account.focus();
+		return false;
+	}
+
+	if (password.value == "")
+	{
+		alert("密码不能为空");
+		password.focus();
+		return false;
+	}
+	
+	if (password1.value == "")
+	{
+		alert("2次密码不能为空");
+		password1.focus();
+		return false;
+	}
+	
+	if (password.value != password1.value)
+	{
+		alert("2次密码输入不相同");
+		password.focus();
+		return false;
+	}
+	
+	// 这种加密方式其实是掩耳盗铃。安全期间换成HTTPS好一些，后期有空考虑看看
+	password.value = faultylabs.MD5(password.value);
+	password1.value = faultylabs.MD5(password1.value);
+
+	return true;
+}
+</script>
+</head>
+<form action="/CreateAccount" enctype="multipart/form-data" onsubmit="return  checkform();" method="post">
+帐号:
+<input type="text" 	   id = "Account"   name="Account"  />
+密码:
+<input type="password" id = "Password"  name="Password" />
+再次确认密码:
+<input type="password" id = "Password1"  name="Password1" />
+<input type="submit" value="ok" />
+</form>

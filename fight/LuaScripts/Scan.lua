@@ -7,7 +7,7 @@ function Scan(account)
 	OutLog_FightInfo("探险开始"..account);
 	
 	local jsonData = Redis_Get(account);
-	if (jsonData == 0) then
+	if (jsonData == nil) then
 		OutLog('Account:'..account..' Get Redis error', '404');
 	end
 	

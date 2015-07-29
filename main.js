@@ -15,9 +15,6 @@ var fight = require("./fight/index");
 redis.ConnectRedis("192.168.0.35", 6379, function (){
 });
 
-// 加载所有页面模块
-var hashTable = OtherManager.FindJSInDirectory('./js');
-
 //用http模块创建一个http服务端 
 http.createServer(function(req, res) 
 {
@@ -25,14 +22,9 @@ http.createServer(function(req, res)
 	{
 		if (req.url == "/favicon.ico")
 			return;
-		
+
 		// 最开始是管理器部分
-		if (req.url == "/")
-		{
-			hashTable["/CreateAccount"].Send(res);
-			return;
-		}
-		else if (req.url == "/UpFile")
+		if (req.url == "/UpFile")
 		{
 			FileManager.UpFile(req, res);
 			return;
@@ -42,21 +34,13 @@ http.createServer(function(req, res)
 			FileManager.GetFile(req, res);
 			return;
 		}
-		
-		var fun = hashTable[req.url];
-		if(fun && req.method.toLowerCase() === 'post')
+		else if (req.url.indexOf("/GetFileEX=") >= 0 )
 		{
-			var ret = fun.Recv(req, res, function (req, res, roleObj)
-			{
-				if (req.url == '/CreateAccount')
-					hashTable["/Main"].Send(req, res, roleObj);
-				else if (req.url == '/CreateFight')
-				{
-					res.writeHead(302, {'Location': 'http://192.168.1.191:8088'});
-					res.end();
-				}
-			});
+			FileManager.GetFileEX(req, res);
+			return;
 		}
+		
+		OtherManager.JumpPage(req.method.toLowerCase() == 'post', req, res, req.url);
 	}
 	catch(e)
 	{

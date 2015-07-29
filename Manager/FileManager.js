@@ -2,6 +2,7 @@
 var formidable = require('formidable');
 var util = require('util');
 
+// GetFile与GetFileEX功能上其实差不多。。。可以进行合并
 function GetFile(req, res) 
 {
 	try
@@ -19,6 +20,49 @@ function GetFile(req, res)
 				if (exists)
 				{
 					var pdf = fs.createReadStream("./tmp/" + url);
+
+					res.writeHead(200, {
+						'Content-Type': 'application/force-download',
+						'Content-Disposition': 'attachment; filename=' + url
+					});
+					
+					pdf.pipe(res);
+				}
+				else
+				{
+					res.writeHead(404);
+					res.end();
+				}
+			}
+			catch(e)
+			{
+				console.log(e);
+			}
+		});
+	}
+	catch(e)
+	{
+		console.log(e);
+	}
+}
+
+function GetFileEX(req, res) 
+{
+	try
+	{
+		if (req.method.toLowerCase() != 'get')
+			return;
+		
+		var url = req.url;
+		url = url.replace("/GetFileEX=",""); 
+
+		fs.exists("./lib/" + url, function(exists) 
+		{
+			try
+			{
+				if (exists)
+				{
+					var pdf = fs.createReadStream("./lib/" + url);
 
 					res.writeHead(200, {
 						'Content-Type': 'application/force-download',
@@ -126,4 +170,5 @@ function UpFile(req, res)
 
 exports.UpFile = UpFile;
 exports.GetFile = GetFile;
+exports.GetFileEX = GetFileEX
 

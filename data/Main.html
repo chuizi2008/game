@@ -1,0 +1,38 @@
+﻿<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" /> 
+<script type="text/javascript" src="GetFileEX=md5.js"></script>
+<script language="JavaScript" type="text/javascript">
+function checkform()
+{
+	var account = document.getElementById("Account");
+	var password = document.getElementById("Password");
+	if (account.value == "")
+	{
+		alert("帐号不能为空");
+		account.focus();
+		return false;
+	}
+
+	if (password.value == "")
+	{
+		alert("密码不能为空");
+		password.focus();
+		return false;
+	}
+	
+	password.value = faultylabs.MD5(password.value);
+
+	return true;
+}
+</script>
+</head>
+  
+<form action="/Login" enctype="multipart/form-data" method="post" onsubmit="return  checkform();"> 
+帐号:
+<input type="text" id = "Account" name="Account" />
+密码:
+<input type="password" id = "Password" name="Password" />
+<input type="submit" value="登录" />
+</form>
+
+<a href="http://192.168.1.191:8080/CreateAccount">创建帐号</a>
