@@ -113,20 +113,20 @@ io.on('connection', function(socket)
 	
 	socket.on('login', function(obj)
 	{
-		console.log("account:" + obj.AccountID + "|LoginKey:" + obj.LoginKey);
-		if (obj.AccountID == null || obj.LoginKey == null)
+		if (obj.Account == null || obj.LoginKey == null)
 		{
-			console.log("obj.AccountID == null || obj.LoginKey == null");
-			socket.emit('Err', {info:"AccountID == null || LoginKey == null"});
+			console.log("obj.Account == null || obj.LoginKey == null");
+			socket.emit('Err', {info:"Account == null || LoginKey == null"});
 			socket.disconnect();
 			return;
 		}
 		
-		redis.GetCache().hget('account', 'acc_' + obj.AccountID, function (error, responseObj) 
+		redis.GetCache().hget('account', 'acc_' + obj.Account, function (error, responseObj) 
 		{
 			if (error)
 			{
 				console.log(error);
+				socket.disconnect();
 				return;
 			}
 			
@@ -138,11 +138,15 @@ io.on('connection', function(socket)
 			}
 			
 			var roleObj = JSON.parse(responseObj);
-					
+			
+			console.log("C:account:" + obj.Account     + "|LoginKey:" + obj.LoginKey);
+			console.log("S:account:" + roleObj.Account + "|LoginKey:" + roleObj.LoginKey);
+			
 			// 判断登录标记
-			if (roleObj.Account != obj.AccountID || roleObj.LoginKey != obj.LoginKey)
+			if (roleObj.Account != obj.Account || roleObj.LoginKey != obj.LoginKey)
 			{
 				console.log("Account: " + obj.Account + "  LoginKey err");
+				socket.disconnect();
 				return;
 			}
 			
@@ -152,8 +156,8 @@ io.on('connection', function(socket)
 			
 			socket.roleObj = roleObj;
 		
-			socket.broadcast.emit('broadcast message', {content:'AccountID:' + roleObj.Account + '进入游戏'});
-			console.log('login AccountID:' + roleObj.Account + '       LoginKey:' + roleObj.LoginKey);
+			socket.broadcast.emit('broadcast message', {content:'Account:' + roleObj.Account + '进入游戏'});
+			console.log('login Account:' + roleObj.Account + '       LoginKey:' + roleObj.LoginKey);
 			socket.emit('loginRet', {content:"Y"});
 		});
 	});
