@@ -8,11 +8,13 @@ using System.IO;
 using System.Net;
 using Quobject.SocketIoClientDotNet.Client;
 using Newtonsoft.Json.Linq;
+using System.Security.Cryptography;  
 
 namespace client
 {
     class Program
     {
+        public static MD5 md5 = new MD5CryptoServiceProvider();  
         public static ManualResetEvent mre = new ManualResetEvent(false);
 
         public static void UpFile()
@@ -74,21 +76,67 @@ namespace client
             write_File.Close();
         }
 
+        public static string Login(string account, string password)
+        {
+            byte[] result = Encoding.UTF8.GetBytes(password);    //tbPass为输入密码的文本框 
+            byte[] output = md5.ComputeHash(result);
+            password = BitConverter.ToString(output).Replace("-", "");
+
+
+            string boundary = "asd";
+            string strBodyData = "";
+            strBodyData += "--" + boundary + "\r\n";
+            strBodyData += "Content-Disposition: form-data; name=\"Account\"\r\n";
+            strBodyData += "\r\n";
+            strBodyData += account + "\r\n";
+
+            strBodyData += "--" + boundary + "\r\n";
+            strBodyData += "Content-Disposition: form-data; name=\"Password\"\r\n";
+            strBodyData += "\r\n";
+            strBodyData += password;
+            strBodyData += "\r\n";
+            strBodyData += "--" + boundary + "--" + "\r\n";
+
+            byte[] bodydata = System.Text.ASCIIEncoding.UTF8.GetBytes(strBodyData);
+
+            // Prepare web request...
+            HttpWebRequest myRequest = (HttpWebRequest)WebRequest.Create("http://192.168.1.191:8080/Login");
+
+            myRequest.Method = "POST";
+            myRequest.ContentType = "multipart/form-data; boundary=" + boundary;
+            myRequest.ContentLength = bodydata.Length;
+            Stream newStream = myRequest.GetRequestStream();
+
+            // Send the data.
+            newStream.Write(bodydata, 0, bodydata.Length);
+            newStream.Close();
+
+            // Get response
+            HttpWebResponse response = (HttpWebResponse)myRequest.GetResponse();
+            StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8);
+            string content = reader.ReadToEnd();
+
+            int index = content.IndexOf(":");
+            if (index > account.Length)
+                return null;
+
+            return content.Substring(index + 1, content.IndexOf("<") - 1 - index);
+        }
+
         static void Main(string[] args)
         {
-            UpFile();
-            GetFile();
-            Console.ReadKey();
+            string loginKey = Login("1", "1");
+            if (loginKey == null)
+                return;
 
-            return;
             Socket socket = IO.Socket("http://192.168.1.191:8088/");
             socket.On(Socket.EVENT_CONNECT, () =>
             {
                 Console.WriteLine("EVENT_CONNECT");
 
                 JObject obj = new JObject();
-                obj["AccountID"] = "123";
-                obj["LoginKey"] = "2212e7c0-343a-11e5-8317-038fd8415a01";
+                obj["Account"] = "1";
+                obj["LoginKey"] = loginKey;
                 socket.Emit("login", obj);
             });
 
