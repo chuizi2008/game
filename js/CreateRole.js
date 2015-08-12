@@ -1,6 +1,6 @@
 var fs = require('fs');
 var formidable = require('formidable');
-var redis = require("../util/util_cache");
+var redis = require("../lib/cache");
 var pageHtml = fs.readFileSync("./data/CreateRole.html","utf-8");  
 var OtherManager = require("../Manager/OtherManager");
 

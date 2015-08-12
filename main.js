@@ -6,10 +6,12 @@
 var OtherManager = require("./Manager/OtherManager");
 var FileManager = require("./Manager/FileManager");
 
-var redis = require("./util/util_cache");
+var redis = require("./lib/cache");
 
 // 初始化战斗模块
-var fight = require("./fight/index");
+var TcpServer = require("./fight/TCPServer");
+var server4Client = new TcpServer(8888, 'chuizi');
+server4Client.Start();
 
 // 初始化数据库连接部分
 redis.ConnectRedis("192.168.0.35", 6379, function (){

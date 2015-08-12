@@ -1,6 +1,5 @@
 var fs = require('fs');
 var formidable = require('formidable');
-var redis = require("../util/util_cache");
 
 function Send(req, res, roleObj) 
 {

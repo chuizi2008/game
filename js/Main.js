@@ -1,6 +1,5 @@
 var fs = require('fs');
 var formidable = require('formidable');
-var redis = require("../util/util_cache");
 var pageHtml = fs.readFileSync("./data/Main.html","utf-8");
 
 function Send(res, roleObj) 
