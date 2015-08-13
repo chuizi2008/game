@@ -8,12 +8,35 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Timers;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 
 namespace client
 {
+    class chuizi
+    {
+        private int ret = 0;
+
+        public bool IsOver()
+        {
+            lock (this)
+            {
+                return ret == 99;
+            }
+        }
+
+        public void Add()
+        {
+            lock (this)
+            {
+                ret++;
+            }
+        }
+    }
+
     class Program
     {
-        public static MD5 md5 = new MD5CryptoServiceProvider();
+        [DllImport("kernel32")]
+        static extern uint GetTickCount();
 
         public static void UpFile()
         {
@@ -77,6 +100,7 @@ namespace client
         public static string Login(string account, string password)
         {
             byte[] result = Encoding.UTF8.GetBytes(password);    //tbPass为输入密码的文本框 
+            MD5 md5 = new MD5CryptoServiceProvider();
             byte[] output = md5.ComputeHash(result);
             password = BitConverter.ToString(output).Replace("-", "");
 
@@ -121,116 +145,78 @@ namespace client
             return content.Substring(index + 1, content.IndexOf("<") - 1 - index);
         }
 
-        static void Run()
+        static void LoginRet(TcpHandle tcp, MsgPacket msg)
         {
-            Console.WriteLine(System.DateTime.Now.ToString());
-            for (int n = 0; n < 99; n++)
-            {
-                string loginKey = Login("1", "1");
-                if (loginKey == null)
-                    return;
-
-                TcpHandle tcp = new TcpHandle("192.168.1.191", 8888);
-                string info = "{\"Account\": \"1\", \"LoginKey\": \"" + loginKey + "\"}";
-                tcp.Send(1, info);
-                while (true)
-                {
-                    MsgPacket msgPack = tcp.GetMshPacker();
-                    if (msgPack != null && msgPack.msgIndex == 1111)
-                        break;
-                }
-                tcp.Close();
-            }
-            Console.WriteLine(System.DateTime.Now.ToString());
-
-            Console.ReadKey (true);
-
-
-
-            // HttpWebRequest myRequest = (HttpWebRequest)WebRequest.Create("http://192.168.1.191:8088/");
+            tcp.Close();
             return;
+        }
 
-            /*
-            Client socket = new Client("http://192.168.1.191:8088/"); // url to nodejs 
-             socket.Connect();
-          //   socket.Close();
-
-            ManualResetEvent mre = new ManualResetEvent(false);
-            int time = System.Environment.TickCount;
-
-            mre.Reset();
+        static void Run(Object obj)
+        {
             string loginKey = Login("1", "1");
             if (loginKey == null)
                 return;
 
-            Client socket = new Client("http://127.0.0.1:3000/"); // url to nodejs 
+            TcpHandle tcp = new TcpHandle("192.168.1.191", 8888);
 
-            Socket socket = IO.Socket("http://192.168.1.191:8088/");
+            tcp.RegisterHandler(1111, LoginRet);
 
-            socket.Disconnect();*/
+            WriteMsg msg = new WriteMsg(1111);
+            msg.WriteString("1");
+            msg.WriteString(loginKey);
+            tcp.Send(msg);
+
+            while (tcp.CheckState() == TcpHandle.EConnectState.ConnectState_GameStart)
+            {
+                tcp.TickServerMsgTransfer();
+            }
+
+            tcp.Close();
+
+            /*
+            chuizi o = null;
+            if (obj != null)
+                o = obj as chuizi;
+
+            string loginKey = Login("1", "1");
+            if (loginKey == null)
+                return;
+
+            TcpHandle tcp = new TcpHandle("192.168.1.191", 8888);
+            string info = "{\"Account\": \"1\", \"LoginKey\": \"" + loginKey + "\"}";
+            tcp.Send(1, info);
+            while (true)
+            {
+                MsgPacket msgPack = tcp.GetMshPacker();
+                if (msgPack != null && msgPack.msgIndex == 1111)
+                    break;
+            }
+            tcp.Close();
+
+            if (o != null)
+                o.Add();*/
         }
 
         static void Main(string[] args)
         {
-            Run();
+            uint ret = GetTickCount();
+            Run(null);
+            Console.WriteLine(GetTickCount() - ret);
+            Console.ReadKey(true);
             /*
-            int maxIndex = 10;
-            for (int index = 0; index < maxIndex; index++)
+            uint ret = GetTickCount();
+            chuizi asd = new chuizi();
+            for (int n = 0; n < 99; n++)
             {
-                Thread newThread = new Thread(new ThreadStart(Run));
-                newThread.Start();
-            }*/
-            /*
-            int time = System.Environment.TickCount;
-            ManualResetEvent mre = new ManualResetEvent(false);
-            for (int index = 0; index < maxIndex; index++)
-            {
-                mre.Reset();
-                string loginKey = Login("1", "1");
-                if (loginKey == null)
-                    return;
-
-                Socket socket = IO.Socket("http://192.168.1.191:8088/");
-
-
-                                /*
-                socket.On(Socket.EVENT_CONNECT, () =>
-                {
-                    Console.WriteLine("EVENT_CONNECT");
-
-                    JObject obj = new JObject();
-                    obj["Account"] = "1";
-                    obj["LoginKey"] = loginKey;
-                    socket.Emit("login", obj);
-
-                    Console.WriteLine("Send OK");
-                });
-
-                socket.On(Socket.EVENT_CONNECT_ERROR, () =>
-                {
-                    Console.WriteLine("EVENT_CONNECT_ERROR");
-
-                });
-
-                socket.On("test_Ret", (data) =>
-                {
-                    mre.Set();
-                });
-
-
-                socket.On("loginRet", (data) =>
-                {
-                    if ((data as JObject)["content"].ToString() == "Y")
-                        Console.WriteLine("login ok");
-                    else
-                        Console.WriteLine("login err");
-                    mre.Set();
-                });
-
-                mre.WaitOne();
-                socket.Disconnect();
+                Thread run = new Thread(new ParameterizedThreadStart(Run));
+                run.Start(asd);
             }
-            Console.WriteLine("运行" + maxIndex + "次后，平均消耗计时:" + ((System.Environment.TickCount - time) / maxIndex).ToString());*/
+
+            while (!asd.IsOver())
+                Thread.Sleep(1);
+            
+            Console.WriteLine(GetTickCount() - ret);
+            Console.ReadKey(true);*/
         }
     }
 }

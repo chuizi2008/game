@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,180 +13,272 @@ namespace client
     {
         public UInt16 msgIndex = 0;        // 消息定义
         public UInt16 msgLength = 0;       // 消息长度
-        public string jsonData = "";       // JSON消息数据
+        public byte[] data = null;         // 字节流数据
     }
 
-    public class TcpHandle : MsgPack
+    public class TcpHandle
     {
+        public enum EConnectState
+        {
+            ConnectState_None,
+            ConnectState_TryConnect,			//初始化网络连接
+            ConnectState_StartConnect,			//开始连接服务器
+            ConnectState_WaitConnect,			//等待连接成功
+            ConnectState_WaitKey,				//连接成功后等待服务器发送Key值
+            ConnectState_GameStart,				//开始游戏
+            ConnectState_ReadError,				//读取数据错误
+            ConnectState_WriteError,			//写入数据错误
+            ConnectState_Disconnect				//网络断开
+        };
+
+        public delegate void MsgCallBack(TcpHandle tcp, MsgPacket msg);
+
         private string m_strIP = "";
         private int m_nPort = 0;
         private TcpClient m_TcpClient = null;
         private Thread thread = null;
         private Stack<MsgPacket> m_Stack = new Stack<MsgPacket>();
+        private Hashtable msgTable = new Hashtable();
 
         public TcpHandle(string ip, int port)
-            : base(0)
         {
             m_strIP = ip;
             m_nPort = port;
 
             m_TcpClient = new TcpClient(m_strIP, m_nPort);
 
-            thread = new Thread(new ParameterizedThreadStart(ReadMsgPacker));
+            // 开启线程，用于监听数据接收
+            thread = new Thread(new ParameterizedThreadStart(Thread_Read));
             thread.Start(this);
         }
 
-        private void ReadThread()
+        public void RegisterHandler(UInt16 nMsgId, MsgCallBack pCallBack)
         {
+            msgTable[nMsgId] = pCallBack;
         }
 
-        private byte[] ReadData(int len)
+        public EConnectState CheckState()
         {
             if (!m_TcpClient.Connected)
-                throw new Exception("Unexpected disconnect");
+                return EConnectState.ConnectState_Disconnect;
 
-            NetworkStream stream = m_TcpClient.GetStream();
-            byte[] data = new byte[len];
-            int readLength = 0;
-            while (readLength < len)
-            {
-                int ret = stream.Read(data, readLength, data.Length - readLength);
-                if (ret == 0)
-                    throw new Exception("Unexpected disconnect");
-
-                readLength += ret;
-            }
-
-            return data;
+            return EConnectState.ConnectState_GameStart;
         }
 
-        private UInt16 ReadUInt16()
+        // 判断当前栈中是否有新消息，有消息就进行处理
+        public void TickServerMsgTransfer()
         {
-            return BitConverter.ToUInt16(ReadData(2), 0);
-        }
-
-        private string ReadString(int len)
-        {
-            NetworkStream stream = m_TcpClient.GetStream();
-            byte[] data = new byte[len];
-            int readLength = 0;
-            while (readLength < len)
+            MsgPacket msg = null;
+            while (null != (msg = GetRecvMsgPacker()))
             {
-                int ret = stream.Read(data, readLength, data.Length - readLength);
-                if (ret == 0)
-                    throw new Exception("Unexpected disconnect");
+                if (msg.msgIndex == 0 || msg.msgLength == 0)
+                    continue;
 
-                readLength += ret;
-            }
+                if (!msgTable.ContainsKey(msg.msgIndex))
+                    continue;
 
-            return System.Text.Encoding.UTF8.GetString(data);
-        }
-
-        private void ReadMsgPacker(object main)
-        {
-            TcpHandle tcp = main as TcpHandle;
-            while (tcp.m_TcpClient.Connected)
-            {
-                try
-                {
-                    MsgPacket pack = new MsgPacket();
-                    pack.msgLength = tcp.ReadUInt16();
-                    pack.msgIndex = tcp.ReadUInt16();
-                    pack.jsonData = tcp.ReadString(pack.msgLength);
-                    lock (m_Stack)
-                        m_Stack.Push(pack);
-                }
-                catch (Exception err)
-                {
-                    return;
-                }
+                (msgTable[msg.msgIndex] as MsgCallBack)(this, msg);
             }
         }
 
+        // 关闭
         public void Close()
         {
             m_TcpClient.Close();
         }
 
-        public MsgPacket GetMshPacker()
+        // 循环读取指定大小的数据
+        private void Read(ref NetworkStream stream, byte[] data)
         {
-            MsgPacket pack = null;
+            int readLength = 0;
+            while (readLength < data.Length)
+            {
+                int ret = stream.Read(data, readLength, data.Length - readLength);
+                if (ret == 0)
+                    throw new Exception("Unexpected disconnect");
+
+                readLength += ret;
+            }
+        }
+
+        private void Thread_Read(object main)
+        {
+            byte[] data1 = new byte[2];
+            byte[] data2 = new byte[2];
+
+            TcpHandle tcp = main as TcpHandle;
+
+            try
+            {
+                while (tcp.m_TcpClient.Connected)
+                {
+                    MsgPacket msg = new MsgPacket();
+                    NetworkStream stream = m_TcpClient.GetStream();
+                    Read(ref stream, data1);
+                    msg.msgLength = BitConverter.ToUInt16(data1, 0);
+                    Read(ref stream, data2);
+                    msg.msgIndex = BitConverter.ToUInt16(data2, 0);
+
+                    if (msg.msgLength != 0)
+                    {
+                        msg.data = new byte[msg.msgLength];
+                        Read(ref stream, msg.data);
+                    }
+
+                    lock (tcp.m_Stack)
+                        tcp.m_Stack.Push(msg);
+                }
+             }
+            catch (Exception err)
+            {
+            }
+            finally
+            {
+                tcp.m_TcpClient.Close();
+                lock (tcp.m_Stack)
+                    tcp.m_Stack.Clear();
+            }
+        }
+
+        private MsgPacket GetRecvMsgPacker()
+        {
             lock (m_Stack)
             {
-                if (m_Stack.Count > 0)
-                    pack = m_Stack.Pop();
+                if (m_Stack.Count == 0)
+                    return null;
+
+                return m_Stack.Pop();
             }
-
-            return pack;
         }
 
-        public bool Send(UInt16 msgID, string json)
+        public bool Send(WriteMsg msg)
         {
-            byte[] data = System.Text.Encoding.UTF8.GetBytes(json);
-            Push((UInt16)data.Length);
-            Push((UInt16)msgID);
-            Push(data);
+            if (msg == null)
+                return false;
 
-            return Send();
-        }
-
-        public bool Send()
-        {
-            int ret = m_TcpClient.Client.Send(base.GetByte());
+            int ret = m_TcpClient.Client.Send(msg.GetByte());
             return ret > 0;
         }
     };
 
-    public class MsgPack
+    public class WriteMsg
     {
-        private UInt32 PacketSize = 2046; // 当总包大小>=2046时，就可以发送了,如果为0，就有消息及发送
+        protected UInt32 PacketSize = 2046; // 当总包大小>=2046时，就可以发送了,如果为0，就有消息及发送
+        protected MemoryStream stream = null;
+        protected BinaryWriter writeStream = null;
 
-        private MemoryStream stream = null;
-        private BinaryWriter writeStream = null;
-
-        public MsgPack(UInt32 size)
+        public WriteMsg(UInt16 id)
         {
-            PacketSize = size;
             stream = new MemoryStream();
             writeStream = new BinaryWriter(stream, Encoding.UTF8);
+            WriteUInt16(0);
+            WriteUInt16(id);
         }
 
-        public void Push(int data)
+        public void WriteInt(int data)
         {
             writeStream.Write(data);
         }
 
-        public void Push(UInt16 data)
+        public void WriteUInt16(UInt16 data)
         {
             writeStream.Write(data);
         }
 
-        public void Push(UInt32 data)
+        public void WriteUInt32(UInt32 data)
         {
             writeStream.Write(data);
         }
 
-        public void Push(string data)
+        public void WriteString(string data)
         {
-            writeStream.Write(data);
+            byte[] byteData = System.Text.Encoding.UTF8.GetBytes(data);
+            writeStream.Write((UInt16)byteData.Length);
+            writeStream.Write(byteData);
         }
 
-        public void Push(byte[] data)
+        public void WriteNByte(byte[] data)
         {
             writeStream.Write(data);
         }
 
         public byte[] GetByte()
         {
-            // 移动到头部
-            writeStream.Seek(0, SeekOrigin.Begin);
-
-            // 这里应该设置一个弹性自动的内存空间，而不是这样固定的，每次都NEW
+            stream.Seek(0, SeekOrigin.Begin);
+            WriteUInt16((UInt16)stream.Length);
+            stream.Seek(0, SeekOrigin.Begin);
             byte[] data = new byte[stream.Length];
             stream.Read(data, 0, (int)stream.Length);
-            stream.Position = 0;
-            stream.SetLength(0);
             return data;
         }
     };
+
+    public class ReadMsg
+    {
+        protected byte[] m_Data = null;
+        protected int m_Position = 0;
+        protected int m_Length = 0;
+
+        public ReadMsg(byte[] data)
+        {
+            m_Data = data;
+            m_Length = data.Length;
+        }
+
+        public byte ReadByte()
+        {
+            byte ret = m_Data[m_Position];
+            m_Position += 1;
+            return ret;
+        }
+
+        public UInt16 ReadUInt16()
+        {
+            UInt16 ret = BitConverter.ToUInt16(m_Data, m_Position);
+            m_Position += 2;
+            return ret;
+        }
+
+        public UInt32 ReadUInt32()
+        {
+            UInt32 ret = BitConverter.ToUInt32(m_Data, m_Position);
+            m_Position += 4;
+            return ret;
+        }
+
+        public UInt64 ReadUInt64()
+        {
+            UInt64 ret = BitConverter.ToUInt64(m_Data, m_Position);
+            m_Position += 8;
+            return ret;
+        }
+
+        public Int16 ReadInt16()
+        {
+            Int16 ret = BitConverter.ToInt16(m_Data, m_Position);
+            m_Position += 2;
+            return ret;
+        }
+
+        public Int32 ReadInt32()
+        {
+            Int32 ret = BitConverter.ToInt32(m_Data, m_Position);
+            m_Position += 4;
+            return ret;
+        }
+
+        public Int64 ReadInt64()
+        {
+            Int64 ret = BitConverter.ToInt64(m_Data, m_Position);
+            m_Position += 8;
+            return ret;
+        }
+
+        public string ReadString(int strLen)
+        {
+            string ret = System.Text.Encoding.UTF8.GetString(m_Data, m_Position, strLen);
+            m_Position += strLen;
+            return ret;
+        }
+    }
 }

@@ -63,20 +63,6 @@ TcpServer.prototype.ServerLog = function(serverName, str)
 
 TcpServer.prototype.SendMsg = function(client, msgID, msg)
 {
-	var json = JSON.stringify(msg);
-	var msgLen = json.length;
-	if (msgLen > MsgBodySize)
-		return;
-
-	console.log(msgLen);
-	console.log(json);
-	var offSet = 0;
-	var sendBuffer = new Buffer(MsgHeadSize + msgLen);
-	sendBuffer.writeUInt16LE(msgLen, offSet); offSet += 2;
-	sendBuffer.writeUInt16LE(msgID,  offSet); offSet += 2;
-	sendBuffer.write(json, offSet, msgLen);
-	
-	client.write(sendBuffer, 'utf-8');
 }
 
 TcpServer.prototype.SendErrInfo = function(client, info)
@@ -106,8 +92,25 @@ TcpServer.prototype.broadcast = function(obj)
 TcpServer.prototype.Login = function(client, obj)
 {
 	var myself = this;
+	var nOffset = 0;
 	
-	if (obj.Account == null || obj.LoginKey == null)
+	osutil.ServerLog(obj.toString());
+	
+	var len = obj.readUInt16LE(nOffset);
+	nOffset += 2;
+	var Account = obj.toString('utf8', nOffset, nOffset + len);
+	nOffset += len;
+	
+	console.log("len == " + len + " || Account == " + Account);
+	
+	len = obj.readUInt16LE(nOffset);
+	nOffset += 2;
+	var LoginKey = obj.toString('utf8', nOffset, nOffset + len);
+	nOffset += len;
+	
+	console.log("len == " + len + " || LoginKey == " + LoginKey);
+	
+	if (Account == null || LoginKey == null)
 	{
 		console.log("obj.Account == null || obj.LoginKey == null");
 		myself.SendErrInfo(client, {info:"Account == null || LoginKey == null"});
@@ -115,7 +118,7 @@ TcpServer.prototype.Login = function(client, obj)
 		return;
 	}
 		
-	redis.GetCache().hget('account', 'acc_' + obj.Account, function (error, responseObj) 
+	redis.GetCache().hget('account', 'acc_' + Account, function (error, responseObj) 
 	{
 		if (error)
 		{
@@ -123,6 +126,8 @@ TcpServer.prototype.Login = function(client, obj)
 			client.destroy();
 			return;
 		}
+		
+		var bufferTemp = new Buffer(responseObj);
 		
 		if (redis.IsNullOrEmpty(responseObj))
 		{
@@ -133,13 +138,13 @@ TcpServer.prototype.Login = function(client, obj)
 		
 		var roleObj = JSON.parse(responseObj);
 		
-		console.log("C:account:" + obj.Account     + "|LoginKey:" + obj.LoginKey);
+		console.log("C:account:" + Account     + "|LoginKey:" + LoginKey);
 		console.log("S:account:" + roleObj.Account + "|LoginKey:" + roleObj.LoginKey);
 		
 		// 判断登录标记
-		if (roleObj.Account != obj.Account || roleObj.LoginKey != obj.LoginKey)
+		if (roleObj.Account != Account || roleObj.LoginKey != LoginKey)
 		{
-			console.log("Account: " + obj.Account + "  LoginKey err");
+			console.log("Account: " + Account + "  LoginKey err");
 			client.destroy();
 			return;
 		}
@@ -150,7 +155,11 @@ TcpServer.prototype.Login = function(client, obj)
 		
 		client.roleObj = roleObj;
 		
-		myself.SendMsg(client, 1111, {ret:1});
+		var sendBuffer = new Buffer(MsgHeadSize + 4);
+		sendBuffer.writeUInt16LE(4, 0);
+		sendBuffer.writeUInt16LE(1111, 2);
+		sendBuffer.writeUInt16LE(1, 4);
+		client.write(sendBuffer, 'utf-8');
 	
 	/*
 		socket.broadcast.emit('broadcast message', {content:'Account:' + roleObj.Account + '进入游戏'});
@@ -210,6 +219,7 @@ TcpServer.prototype.Start = function()
         //存储数据
 		var bufferTemp = new Buffer(0);
 		var index = 0;
+		
 		// 接收数据
 		client.on('data', function(data) 
 		{
@@ -254,6 +264,8 @@ TcpServer.prototype.Start = function()
 					bufferTemp = new Buffer(0);
 					break;
 				}
+				
+				osutil.ServerLog("nMsgSize = " + nMsgSize);
 
 				// 包大小不完全，等待下一个内容
 				if(nMsgSize > nDataLen)
@@ -271,7 +283,9 @@ TcpServer.prototype.Start = function()
 				var nMsgID = receiveBuffer.readUInt16LE(nOffset);
 				nOffset += 2;
 				nDataLen -= 2;
-
+				
+				osutil.ServerLog("nMsgID = " + nMsgID);
+				
 				// 心跳包
 				if(nMsgID == heartBeatMsgID)
 				{
@@ -293,19 +307,11 @@ TcpServer.prototype.Start = function()
 				// 消息逻辑包
 				else
 				{
-					index++;
 					var bufferRecv = new Buffer(nMsgSize);
-					receiveBuffer.copy(bufferRecv, nOffset, 0, nDataLen);
+					receiveBuffer.copy(bufferRecv, 0, nOffset, nOffset + nDataLen);
 					osutil.ServerLog("received data, msgID = " + nMsgID + ", length =" + nMsgSize);
-					osutil.ServerLog("aaaaaaaaaaaaaaaaaaaaaaaaaaa");
-					var json = receiveBuffer.toString('utf8', nOffset, nOffset + nMsgSize);
-					osutil.ServerLog("111" + json);
-
-					var MsgContent = JSON.parse(json)
-					osutil.ServerLog("222" + MsgContent.Account);
-					
-					if (nMsgID == 1)
-						myself.Login(client, MsgContent);
+					if (nMsgID == 1111)
+						myself.Login(client, bufferRecv);
 				}
 				nOffset += nMsgSize;
 				nDataLen -= nMsgSize;
