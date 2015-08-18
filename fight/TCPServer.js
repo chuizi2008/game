@@ -3,16 +3,8 @@ var uuid = require('node-uuid');
 var net = require('net');
 var osutil = require('../lib/osutil');
 var redis = require("../lib/cache");
-
-// 包大小[2] + 包消息标识[2] + 包实际内容[0x0FFF]
-var MsgHeadSize = 4;
-var MsgBodySize = 0x0FFF;
-var MsgMaxSize = MsgHeadSize + MsgBodySize;
-
-// 心跳包相关
-var heartBeatCheckTime = 7000;
-var heartBeatIndexMax = 0x7FFF;
-var heartBeatMsgID = 0xFFFF;
+var OtherManager = require("../Manager/OtherManager");
+var NetConfiguration = require("./MsgManager/NetConfiguration");
 
 function TcpServer(nPort, name)
 {
@@ -30,10 +22,8 @@ function TcpServer(nPort, name)
 
 	this.port = nPort;
 	this.serverName = name;
-	this.msgHandler = null;
-	this.connCB = null;
-	this.connBrokenCB = null;
-	this.connects = {};
+	this.ClientTable = {};
+	this.MsgManager = OtherManager.FindMsgInDirectory('./fight/MsgManager');
 }
 
 TcpServer.prototype.RefreshScript = function ()
@@ -59,113 +49,6 @@ TcpServer.prototype.DisconnectAccount = function (account)
 TcpServer.prototype.ServerLog = function(serverName, str)
 {
 	osutil.ServerLog("pid: " + process.pid + "  [" + serverName + "]   " + str);
-}
-
-TcpServer.prototype.SendMsg = function(client, msgID, msg)
-{
-}
-
-TcpServer.prototype.SendErrInfo = function(client, info)
-{
-	var json = JSON.stringify(info);
-	var msgLen = json.length;
-	if (msgLen > MsgBodySize)
-		return;
-	
-	var offSet = 0;
-	var sendBuffer = new Buffer(MsgHeadSize + msgLen);
-	sendBuffer.writeUInt16LE(msgLen, offSet); offSet += 2;
-	sendBuffer.writeUInt16LE(msgID,  offSet); offSet += 2;
-	sendBuffer.write(json, offSet, msgLen);
-	
-	client.write(sendBuffer, 'utf-8', function()
-	{
-		client.end();
-	});
-}
-
-TcpServer.prototype.broadcast = function(obj)
-{
-	var myself = this;
-}
-
-TcpServer.prototype.Login = function(client, obj)
-{
-	var myself = this;
-	var nOffset = 0;
-	
-	osutil.ServerLog(obj.toString());
-	
-	var len = obj.readUInt16LE(nOffset);
-	nOffset += 2;
-	var Account = obj.toString('utf8', nOffset, nOffset + len);
-	nOffset += len;
-	
-	console.log("len == " + len + " || Account == " + Account);
-	
-	len = obj.readUInt16LE(nOffset);
-	nOffset += 2;
-	var LoginKey = obj.toString('utf8', nOffset, nOffset + len);
-	nOffset += len;
-	
-	console.log("len == " + len + " || LoginKey == " + LoginKey);
-	
-	if (Account == null || LoginKey == null)
-	{
-		console.log("obj.Account == null || obj.LoginKey == null");
-		myself.SendErrInfo(client, {info:"Account == null || LoginKey == null"});
-		client.destroy();
-		return;
-	}
-		
-	redis.GetCache().hget('account', 'acc_' + Account, function (error, responseObj) 
-	{
-		if (error)
-		{
-			console.log(error);
-			client.destroy();
-			return;
-		}
-		
-		var bufferTemp = new Buffer(responseObj);
-		
-		if (redis.IsNullOrEmpty(responseObj))
-		{
-			console.log('this is big bug');
-			client.destroy();
-			return;
-		}
-		
-		var roleObj = JSON.parse(responseObj);
-		
-		console.log("C:account:" + Account     + "|LoginKey:" + LoginKey);
-		console.log("S:account:" + roleObj.Account + "|LoginKey:" + roleObj.LoginKey);
-		
-		// 判断登录标记
-		if (roleObj.Account != Account || roleObj.LoginKey != LoginKey)
-		{
-			console.log("Account: " + Account + "  LoginKey err");
-			client.destroy();
-			return;
-		}
-
-		myself.DisconnectAccount(roleObj.Account);
-
-		myself.ClientTable[roleObj.Account] = client;
-		
-		client.roleObj = roleObj;
-		
-		var sendBuffer = new Buffer(MsgHeadSize + 4);
-		sendBuffer.writeUInt16LE(4, 0);
-		sendBuffer.writeUInt16LE(1111, 2);
-		sendBuffer.writeUInt16LE(1, 4);
-		client.write(sendBuffer, 'utf-8');
-	
-	/*
-		socket.broadcast.emit('broadcast message', {content:'Account:' + roleObj.Account + '进入游戏'});
-		console.log('login Account:' + roleObj.Account + '       LoginKey:' + roleObj.LoginKey);
-		socket.emit('loginRet', {content:"Y"});*/
-	});
 }
 
 // 开启服务
@@ -197,7 +80,7 @@ TcpServer.prototype.Start = function()
 		session.address = client.remoteAddress;
 		session.heartbeatIndex = 0;
 		myself.connects[netId] = session;*/
-
+		
 		client.on('close', function() 
 		{
 			osutil.ServerLog("client closed, ip:" + client.remoteAddress);
@@ -225,8 +108,6 @@ TcpServer.prototype.Start = function()
 		{
 			// 这个TCP并不像以往C++那种SOCKET，是不分包的，对的就是不分包，需要自己组装，拆分
 			// 应该说是流方式
-			osutil.ServerLog("data.length = " + data.length);
-			
 			var receiveBuffer = new Buffer(bufferTemp.length + data.length);
 			if(bufferTemp.length > 0)
 			{
@@ -250,7 +131,7 @@ TcpServer.prototype.Start = function()
 				}
 					
 				// 小于最小包标准，就是只有包头
-				if (nDataLen < MsgHeadSize)
+				if (nDataLen < NetConfiguration.MsgHeadSize)
 				{
 					bufferTemp = new Buffer(nDataLen);
 					receiveBuffer.copy(bufferTemp, 0, nOffset, nOffset + nDataLen);
@@ -259,13 +140,11 @@ TcpServer.prototype.Start = function()
 
 				// 包内容超过标准
 				var nMsgSize = receiveBuffer.readUInt16LE(nOffset);
-				if (nMsgSize > MsgBodySize)
+				if (nMsgSize > NetConfiguration.MsgBodySize)
 				{
 					bufferTemp = new Buffer(0);
 					break;
 				}
-				
-				osutil.ServerLog("nMsgSize = " + nMsgSize);
 
 				// 包大小不完全，等待下一个内容
 				if(nMsgSize > nDataLen)
@@ -284,10 +163,8 @@ TcpServer.prototype.Start = function()
 				nOffset += 2;
 				nDataLen -= 2;
 				
-				osutil.ServerLog("nMsgID = " + nMsgID);
-				
 				// 心跳包
-				if(nMsgID == heartBeatMsgID)
+				if(nMsgID == NetConfiguration.heartBeatMsgID)
 				{
 					/*
 					var heartbeatIndex = receiveBuffer.readUInt16LE(nOffset);
@@ -310,8 +187,8 @@ TcpServer.prototype.Start = function()
 					var bufferRecv = new Buffer(nMsgSize);
 					receiveBuffer.copy(bufferRecv, 0, nOffset, nOffset + nDataLen);
 					osutil.ServerLog("received data, msgID = " + nMsgID + ", length =" + nMsgSize);
-					if (nMsgID == 1111)
-						myself.Login(client, bufferRecv);
+					//osutil.ServerLog(typeof(myself.MsgManager[nMsgID]));
+					myself.MsgManager[nMsgID](myself, client, bufferRecv);
 				}
 				nOffset += nMsgSize;
 				nDataLen -= nMsgSize;

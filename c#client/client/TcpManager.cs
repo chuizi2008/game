@@ -31,13 +31,13 @@ namespace client
             ConnectState_Disconnect				//网络断开
         };
 
-        public delegate void MsgCallBack(TcpHandle tcp, MsgPacket msg);
+        public delegate void MsgCallBack(ReadMsg read);
 
         private string m_strIP = "";
         private int m_nPort = 0;
         private TcpClient m_TcpClient = null;
         private Thread thread = null;
-        private Stack<MsgPacket> m_Stack = new Stack<MsgPacket>();
+        private Queue<MsgPacket> m_Queue = new Queue<MsgPacket>();
         private Hashtable msgTable = new Hashtable();
 
         public TcpHandle(string ip, int port)
@@ -77,7 +77,7 @@ namespace client
                 if (!msgTable.ContainsKey(msg.msgIndex))
                     continue;
 
-                (msgTable[msg.msgIndex] as MsgCallBack)(this, msg);
+                (msgTable[msg.msgIndex] as MsgCallBack)(new ReadMsg(msg.data));
             }
         }
 
@@ -85,6 +85,8 @@ namespace client
         public void Close()
         {
             m_TcpClient.Close();
+            lock (m_Queue)
+                m_Queue.Clear();
         }
 
         // 循环读取指定大小的数据
@@ -124,31 +126,38 @@ namespace client
                         msg.data = new byte[msg.msgLength];
                         Read(ref stream, msg.data);
                     }
-
-                    lock (tcp.m_Stack)
-                        tcp.m_Stack.Push(msg);
+                    
+                    tcp.PushRecvMsgPacker(msg);
                 }
              }
             catch (Exception err)
             {
+                // 这里应该是半路突然被XX掉了的
+                // 所以暂时先直接放弃收到的消息，反正发不出去
+                // Console.WriteLine(err.Message);
             }
             finally
             {
-                tcp.m_TcpClient.Close();
-                lock (tcp.m_Stack)
-                    tcp.m_Stack.Clear();
+                GameState.State.SetState(ELoginState.Login_ERR);
             }
         }
 
         private MsgPacket GetRecvMsgPacker()
         {
-            lock (m_Stack)
+            lock (m_Queue)
             {
-                if (m_Stack.Count == 0)
+                if (m_Queue.Count == 0)
                     return null;
 
-                return m_Stack.Pop();
+                return m_Queue.Dequeue();
             }
+        }
+
+
+        private void PushRecvMsgPacker(MsgPacket msg)
+        {
+            lock (m_Queue)
+                m_Queue.Enqueue(msg);
         }
 
         public bool Send(WriteMsg msg)
@@ -175,6 +184,11 @@ namespace client
             WriteUInt16(id);
         }
 
+        public void WriteByte(byte data)
+        {
+            writeStream.Write(data);
+        }
+
         public void WriteInt(int data)
         {
             writeStream.Write(data);
@@ -192,6 +206,12 @@ namespace client
 
         public void WriteString(string data)
         {
+            if (data.Length == 0)
+            {
+                WriteUInt16(0);
+                return;
+            }
+
             byte[] byteData = System.Text.Encoding.UTF8.GetBytes(data);
             writeStream.Write((UInt16)byteData.Length);
             writeStream.Write(byteData);
@@ -274,10 +294,14 @@ namespace client
             return ret;
         }
 
-        public string ReadString(int strLen)
+        public string ReadString()
         {
-            string ret = System.Text.Encoding.UTF8.GetString(m_Data, m_Position, strLen);
-            m_Position += strLen;
+            Int16 len = ReadInt16();
+            if (len == 0)
+                return null;
+
+            string ret = System.Text.Encoding.UTF8.GetString(m_Data, m_Position, len);
+            m_Position += len;
             return ret;
         }
     }

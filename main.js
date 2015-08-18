@@ -2,6 +2,7 @@
     http = require('http'),
     util = require('util'),
 	fs = require('fs');
+var url = require("url");
 
 var OtherManager = require("./Manager/OtherManager");
 var FileManager = require("./Manager/FileManager");
@@ -18,10 +19,15 @@ redis.ConnectRedis("192.168.0.35", 6379, function (){
 });
 
 //用http模块创建一个http服务端 
-http.createServer(function(req, res) 
+http.createServer(function(req, res)
 {
 	try
 	{
+		var params = url.parse(req.url, true);//解释url参数部分name=zzl&email=zzl@sina.com
+		var ret = OtherManager.JumpLogic(req, res, params);
+		if (ret == 1)
+			return;
+		
 		if (req.url == "/favicon.ico")
 			return;
 
@@ -42,7 +48,7 @@ http.createServer(function(req, res)
 			return;
 		}
 		
-		OtherManager.JumpPage(req.method.toLowerCase() == 'post', req, res, req.url);
+		// OtherManager.JumpPage(req.method.toLowerCase() == 'post', req, res, req.url);
 	}
 	catch(e)
 	{

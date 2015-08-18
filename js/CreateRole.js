@@ -88,5 +88,79 @@ function Recv(req, res)
     }
 }
 
+function Recv_Get(req, res, params) 
+{
+	var account = params.query.acc;
+	var password = params.query.pass;
+	var occupation = params.query.occ;
+				
+    try 
+	{
+		if (OtherManager.IsNullOrEmpty(account) || OtherManager.IsNullOrEmpty(password) ||
+			OtherManager.IsNullOrEmpty(occupation))
+		{
+			OtherManager.OutRet(res, 0, "");
+			return;
+		}
+			
+		redis.GetCache().hget('account', 'acc_' + account, function (error, responseObj) 
+		{
+			var roleObj;
+			
+			// 获取缓存失败
+			if (error)
+			{
+				console.log(error);
+				OtherManager.OutRet(res, 0, "");
+				return;
+			}
+				
+			if (OtherManager.IsNullOrEmpty(responseObj))
+			{
+				console.log("Account: " + account + "  load err");
+				OtherManager.OutRet(res, 1, "");
+				return;
+			}
+				
+			roleObj = JSON.parse(responseObj);
+			
+			// 设置登录标记
+			if (roleObj.LoginKey != password)
+			{
+				console.log("Account: " + account + "  LoginKey err");
+				OtherManager.OutRet(res, 2, "");
+				return;
+			}
+				
+			var dataObj = new Object();
+			dataObj.Account		 = roleObj.Account;
+			dataObj.Occupation   = occupation;				// 职业
+			dataObj.Level		 = 1;						// 等级
+			dataObj.MovePoint    = 10;						// 行动力
+			dataObj.AttackLevel  = 1;						// 攻击等级
+			dataObj.DeffineLevel = 1;						// 防御等级
+			dataObj.Gold = 0;								// 金币
+			redis.GetCache().hmset('roledbi', 'acc_' + account, JSON.stringify(dataObj), function(error1)
+			{
+				if (error)
+				{
+					console.log(error.stack);
+					OtherManager.OutRet(res, 2, "");
+					return;
+				}
+				
+				console.log("Account: " + roleObj.Account + "  Role Create OK");
+				OtherManager.OutRet(res, 200, "");
+			});
+		});
+	}
+    catch (error) 
+	{
+		console.log(error.stack);
+		OtherManager.OutRet(res, 0, "");
+    }
+}
+
 exports.Send = Send;
 exports.Recv = Recv;
+exports.Recv_Get = Recv_Get;

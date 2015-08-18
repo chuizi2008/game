@@ -2,6 +2,7 @@ var fs = require('fs');
 var formidable = require('formidable');
 var redis = require("../lib/cache");
 var OtherManager = require("../Manager/OtherManager");
+var md5 = require("../lib/md5");
 var pageHtml = fs.readFileSync("./data/CreateAccount.html","utf-8");
 
 function Send_Jump(res, account, loginkey)
@@ -36,6 +37,74 @@ function Send(res)
     }
 }
 
+function Recv_Get(req, res, params) 
+{
+	var account = params.query.acc;
+	var password = faultylabs.MD5(params.query.pass)
+
+	if (OtherManager.IsNullOrEmpty(account) || OtherManager.IsNullOrEmpty(password))
+	{
+		OtherManager.OutRet(res, 0, "");
+		return;
+	}
+	
+	redis.GetCache().hget('account', 'acc_' + account, function (error, responseObj) 
+	{
+		try 
+		{
+			var roleObj;
+			
+			// 获取缓存失败
+			if (error)
+			{
+				console.log(error.stack);
+				OtherManager.Out404(res, account + ' 创建失败');
+				return;
+			}
+					
+			if (OtherManager.IsNullOrEmpty(responseObj))
+			{
+				roleObj = new Object;
+				roleObj.Account = account;
+				roleObj.Password = password;
+				roleObj.Name = account;
+				roleObj.LoginKey = OtherManager.GetLoginKey();
+				redis.GetCache().hmset('account', 'acc_' + account, JSON.stringify(roleObj), function(error1)
+				{
+					try 
+					{
+						if (error) 
+						{
+							console.log(error.stack);
+							OtherManager.OutRet(res, 0, "");
+							return;
+						}
+						
+						console.log("Account: " + roleObj.Account + "  Create OK");
+						OtherManager.OutRet(res, 200, "");
+					}
+					catch (error) 
+					{
+						console.log(error.stack);
+						OtherManager.OutRet(res, 0, "");
+					}
+				});
+			}
+			else
+			{
+				OtherManager.OutRet(res, 1, "");
+				return;
+			}
+		}
+		catch (error) 
+		{
+			console.log(error.stack);
+			OtherManager.OutRet(res, 0, "");
+		}
+	});
+}
+
+/*
 function Recv(req, res)
 {
         var form = new formidable.IncomingForm();
@@ -98,6 +167,7 @@ function Recv(req, res)
 		});
 		return;
 }
-
+*/
 exports.Send = Send;
-exports.Recv = Recv;
+//exports.Recv = Recv;
+exports.Recv_Get = Recv_Get;
