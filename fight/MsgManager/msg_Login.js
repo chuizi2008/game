@@ -3,6 +3,7 @@ var sendBroadcast = require('./msg_Chat');
 var redis = require("../../lib/cache");
 var NetConfiguration = require("./NetConfiguration");
 var SendBuffer = require("../../lib/SendBuffer");
+var OtherManager = require("../../Manager/OtherManager");
 
 function Send(client, ret)
 {
@@ -60,8 +61,8 @@ exports.Recv = function(tcpServer, client, obj)
 			client.destroy();
 			return;
 		}
-		
-		if (redis.IsNullOrEmpty(responseObj))
+
+        if (OtherManager.IsNullOrEmpty(responseObj))
 		{
 			console.log('this is big bug');
 			client.destroy();
@@ -84,6 +85,7 @@ exports.Recv = function(tcpServer, client, obj)
 		tcpServer.DisconnectAccount(roleObj.Account);
 
 		tcpServer.ClientTable[roleObj.Account] = client;
+		tcpServer.ClientNum++;
 		
 		client.roleObj = roleObj;
 		
@@ -93,5 +95,8 @@ exports.Recv = function(tcpServer, client, obj)
 		
 		// 广播
 		sendBroadcast.Send_Broadcast(tcpServer, 1, "欢迎新的锤子[" + Account + "]加入游戏")
+
+		// 内部打印当前人数
+		tcpServer.ServerLog(1, "当前在线人数:" + tcpServer.ClientNum);
 	});
 };

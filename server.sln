@@ -1,0 +1,73 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Main", "Main", "{452E64A5-64DA-4875-984F-025B62B8E531}"
+	ProjectSection(SolutionItems) = preProject
+		main.js = main.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "js", "js", "{8DDFE01A-4757-4C9B-9875-785B9BDBB429}"
+	ProjectSection(SolutionItems) = preProject
+		js\CreateAccount.js = js\CreateAccount.js
+		js\CreateRole.js = js\CreateRole.js
+		js\Fight.js = js\Fight.js
+		js\Login.js = js\Login.js
+		js\Main.js = js\Main.js
+		js\Welcome.js = js\Welcome.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lib", "lib", "{689C8F8C-3737-45AA-8F8B-E2451509CD94}"
+	ProjectSection(SolutionItems) = preProject
+		lib\cache.js = lib\cache.js
+		lib\constent.js = lib\constent.js
+		lib\md5.js = lib\md5.js
+		lib\other.js = lib\other.js
+		lib\SendBuffer.js = lib\SendBuffer.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Manager", "Manager", "{8CD8C0F9-AAF9-4F92-AF6C-EDBBD1D13196}"
+	ProjectSection(SolutionItems) = preProject
+		Manager\FileManager.js = Manager\FileManager.js
+		Manager\LuaManager.js = Manager\LuaManager.js
+		Manager\OtherManager.js = Manager\OtherManager.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fight", "fight", "{AD40F385-3844-4499-ACA9-C4FA78781988}"
+	ProjectSection(SolutionItems) = preProject
+		fight\TCPServer.js = fight\TCPServer.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MsgManager", "MsgManager", "{64B75FCF-70FC-4E18-AFC9-69EFFCCF8B5E}"
+	ProjectSection(SolutionItems) = preProject
+		fight\MsgManager\msg_Chat.js = fight\MsgManager\msg_Chat.js
+		fight\MsgManager\msg_Login.js = fight\MsgManager\msg_Login.js
+		fight\MsgManager\NetConfiguration.js = fight\MsgManager\NetConfiguration.js
+		fight\MsgManager\NetMessageIds.js = fight\MsgManager\NetMessageIds.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LuaScripts", "LuaScripts", "{20BBFAD8-2E8E-4939-BAB5-7DEEE50761A9}"
+	ProjectSection(SolutionItems) = preProject
+		fight\LuaScripts\Main.lua = fight\LuaScripts\Main.lua
+		fight\LuaScripts\Scan.lua = fight\LuaScripts\Scan.lua
+		fight\LuaScripts\Test.lua = fight\LuaScripts\Test.lua
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Lib", "Lib", "{5CDC83CF-9E74-46EE-8613-F414B53310B1}"
+	ProjectSection(SolutionItems) = preProject
+		fight\LuaScripts\Lib\json.lua = fight\LuaScripts\Lib\json.lua
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8DDFE01A-4757-4C9B-9875-785B9BDBB429} = {452E64A5-64DA-4875-984F-025B62B8E531}
+		{689C8F8C-3737-45AA-8F8B-E2451509CD94} = {452E64A5-64DA-4875-984F-025B62B8E531}
+		{8CD8C0F9-AAF9-4F92-AF6C-EDBBD1D13196} = {452E64A5-64DA-4875-984F-025B62B8E531}
+		{AD40F385-3844-4499-ACA9-C4FA78781988} = {452E64A5-64DA-4875-984F-025B62B8E531}
+		{64B75FCF-70FC-4E18-AFC9-69EFFCCF8B5E} = {AD40F385-3844-4499-ACA9-C4FA78781988}
+		{20BBFAD8-2E8E-4939-BAB5-7DEEE50761A9} = {AD40F385-3844-4499-ACA9-C4FA78781988}
+		{5CDC83CF-9E74-46EE-8613-F414B53310B1} = {20BBFAD8-2E8E-4939-BAB5-7DEEE50761A9}
+	EndGlobalSection
+EndGlobal

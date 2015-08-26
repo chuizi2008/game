@@ -1,6 +1,7 @@
 ﻿var fs = require('fs');
 var path = require('path');
 var uuid = require("node-uuid");
+var colors = require('colors');
 
 var errPage = fs.readFileSync("./data/404.html","utf-8");
 
@@ -14,7 +15,6 @@ function IsNullOrEmpty(str)
 
 function FindJSInDirectory(currentDir) 
 {
-	console.log('module load begin');
 	var actions = [];
 	var files = fs.readdirSync(currentDir);
 
@@ -29,19 +29,16 @@ function FindJSInDirectory(currentDir)
 			var captured = reg.exec(filepath);
 			if(captured.length > 0) {
 				var httpPath = captured[1].replace("\\", "/");
-				console.log("pid: " + process.pid + " Add request handler [" + filepath + "] to path [" + httpPath + "]");
 				actions[httpPath] = require('../' + filepath);
 			}
 		}
 	}
 	
-	console.log('js module load end');
 	return actions;
 };
 
 function FindMsgInDirectory(currentDir) 
 {
-	console.log('msg module load begin');
 	var actions = [];
 	var files = fs.readdirSync(currentDir);
 
@@ -63,18 +60,16 @@ function FindMsgInDirectory(currentDir)
 				
 				if (actions[ret.MsgID] != null)
 				{
-					console.log( "MsgID:" + ret.MsgID + " not is null");
+					ServerLog_Err("MsgID:" + ret.MsgID + " not is null");
 					return;
 				}
 				
 				actions[ret.MsgID] = ret.Recv;
 				var httpPath = captured[1].replace("\\", "/");
-				console.log("pid: " + process.pid + "    MsgID:" + ret.MsgID + "   [" + httpPath + "]" + "   load ok");
 			}
 		}
 	}
 	
-	console.log('msg module load end');
 	return actions;
 };
 
@@ -102,6 +97,29 @@ function GoFight(res)
 	res.writeHead(302, {'Location': 'http://192.168.1.191:8088'});
 	res.end();
 }
+
+function ServerLog(color, msg, stack) 
+{
+	var curr = new Date();
+	if (color == 1)
+	{
+		console.log("[" + curr.getFullYear() + "/" + (curr.getMonth() + 1) + "/" + curr.getDate() + " " + curr.toLocaleTimeString() + "." + curr.getMilliseconds() + "]" + msg);
+		if (stack)
+			console.log(stack);
+	}
+	else if (color == 2)
+	{
+		console.log(colors.yellow("[" + curr.getFullYear() + "/" + (curr.getMonth() + 1) + "/" + curr.getDate() + " " + curr.toLocaleTimeString() + "." + curr.getMilliseconds() + "]" + msg));
+		if (stack)
+			console.log(colors.yellow(stack));
+	}
+	else if (color == 3)
+	{
+		console.log(colors.red("[" + curr.getFullYear() + "/" + (curr.getMonth() + 1) + "/" + curr.getDate() + " " + curr.toLocaleTimeString() + "." + curr.getMilliseconds() + "]" + msg));
+		if (stack)
+			console.log(colors.red(stack));
+	}
+};
 
 // 页面跳转
 function JumpPage(isPost, req, res, url)
@@ -141,4 +159,4 @@ exports.JumpPage    	   = JumpPage;
 exports.JumpLogic    	   = JumpLogic;
 exports.GetLoginKey 	   = GetLoginKey;
 exports.GoFight			   = GoFight;
-
+exports.ServerLog		   = ServerLog

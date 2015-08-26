@@ -7,18 +7,20 @@ namespace client.MsgManager
 {
     class Chat
     {
-        // 登录结果
-        public static void Reg_MsgCallBack()
+        public delegate void Chat_CallBack(string str);
+        public static Chat_CallBack callBack = null;
+
+        public static void Reg_Fun(Chat_CallBack fun)
         {
-            GameState.TcpClient.RegisterHandler((UInt16)MsgIds.MSG_CHAT, new TcpHandle.MsgCallBack(Recv_MSG_CHAT));
+            callBack = fun;
         }
 
-        private static void Recv_MSG_CHAT(ReadMsg read)
+        public static void Recv_MSG_CHAT(TcpHandle client, ReadMsg read)
         {
             UInt16 type =  read.ReadUInt16();
             string info = read.ReadString();
-            Console.WriteLine(info);
-            GameState.State.SetState(ELoginState.Login_Close);
+            if (callBack != null)
+                callBack(info);
         }
 
         public static void SendMsg_MSG_CHAT()

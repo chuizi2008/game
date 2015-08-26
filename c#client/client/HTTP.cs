@@ -32,12 +32,14 @@ namespace client
                     strRet = sr.ReadLine();
                     sr.Close();
                 }
+                httpResponse.Close();
+                httpRequest.Abort();
 
                 return ret;
             }
             catch (Exception err)
             {
-                Console.WriteLine(err.Message);
+                //Console.WriteLine(err.Message);
                 return 0;
             }
         }

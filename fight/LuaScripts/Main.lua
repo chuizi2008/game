@@ -21,5 +21,3 @@ if (str == 0) then
 else
 	SysOutLog(str);
 end
-
-SysOutLog('main load ok');

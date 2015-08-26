@@ -1,0 +1,13 @@
+D:\nodejs\game\u3dclient\Temp\bin\Debug\Assembly-CSharp.dll
+D:\nodejs\game\u3dclient\Temp\bin\Debug\Assembly-CSharp.pdb
+D:\nodejs\game\u3dclient\Temp\bin\Debug\UnityEditor.dll
+D:\nodejs\game\u3dclient\Temp\bin\Debug\UnityEngine.dll
+D:\nodejs\game\u3dclient\Temp\bin\Debug\UnityEngine.UI.dll
+D:\nodejs\game\u3dclient\Temp\bin\Debug\Mono.Cecil.dll
+D:\nodejs\game\u3dclient\Temp\bin\Debug\Unity.SerializationLogic.dll
+D:\nodejs\game\u3dclient\Temp\bin\Debug\Unity.DataContract.dll
+D:\nodejs\game\u3dclient\Temp\bin\Debug\ICSharpCode.NRefactory.dll
+D:\nodejs\game\u3dclient\Temp\bin\Debug\Unity.CecilTools.dll
+D:\nodejs\game\u3dclient\obj\Debug\Assembly-CSharp.csprojResolveAssemblyReference.cache
+D:\nodejs\game\u3dclient\obj\Debug\Assembly-CSharp.dll
+D:\nodejs\game\u3dclient\obj\Debug\Assembly-CSharp.pdb
