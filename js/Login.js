@@ -2,6 +2,7 @@ var fs = require('fs');
 var formidable = require('formidable');
 var redis = require("../lib/cache");
 var OtherManager = require("../Manager/OtherManager");
+var RedisManager = require("../Manager/RedisManager");
 
 function Send_Jump(res, account, loginkey)
 {

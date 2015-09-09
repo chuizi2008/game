@@ -18,7 +18,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "js", "js", "{8DDFE01A-4757-
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lib", "lib", "{689C8F8C-3737-45AA-8F8B-E2451509CD94}"
 	ProjectSection(SolutionItems) = preProject
-		lib\cache.js = lib\cache.js
 		lib\constent.js = lib\constent.js
 		lib\md5.js = lib\md5.js
 		lib\other.js = lib\other.js
@@ -28,8 +27,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Manager", "Manager", "{8CD8C0F9-AAF9-4F92-AF6C-EDBBD1D13196}"
 	ProjectSection(SolutionItems) = preProject
 		Manager\FileManager.js = Manager\FileManager.js
-		Manager\LuaManager.js = Manager\LuaManager.js
-		Manager\OtherManager.js = Manager\OtherManager.js
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fight", "fight", "{AD40F385-3844-4499-ACA9-C4FA78781988}"
@@ -47,7 +44,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MsgManager", "MsgManager", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LuaScripts", "LuaScripts", "{20BBFAD8-2E8E-4939-BAB5-7DEEE50761A9}"
 	ProjectSection(SolutionItems) = preProject
-		fight\LuaScripts\Main.lua = fight\LuaScripts\Main.lua
 		fight\LuaScripts\Scan.lua = fight\LuaScripts\Scan.lua
 		fight\LuaScripts\Test.lua = fight\LuaScripts\Test.lua
 	EndProjectSection

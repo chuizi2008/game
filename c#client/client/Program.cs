@@ -49,7 +49,7 @@ namespace client
             for (int n = 0; n < 1; n++)
             {
                 Game obj = new Game();
-                if (obj.Run((str as string) + n.ToString(), "1"))
+                if (obj.Run((str as string) + n.ToString(), "1", "1"))
                     ret[0]++;
                 else
                     ret[1]++;
@@ -61,7 +61,7 @@ namespace client
 
         static void Main(string[] args)
         {
-            UInt64 max = 200;
+            UInt64 max = 1;
             for (UInt64 n = 0; n < max; n++)
             {
                 Thread thread = new Thread(new ParameterizedThreadStart(Run));

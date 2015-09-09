@@ -13,14 +13,14 @@ namespace client
             Console.WriteLine(str);
         }
 
-        public bool Run(string account, string password)
+        public bool Run(string account, string password, string serverName)
         {
             string loginKey = null;
 
             while (true)
             {
                 HTTP httpClient = new HTTP();
-                int ret = httpClient.Login(account, "1", ref loginKey);
+                int ret = httpClient.Login(account, "1", serverName, ref loginKey);
                 if (ret == 1)
                 {
                     // 注册
@@ -34,6 +34,7 @@ namespace client
                 }
                 else if (ret == 3)
                 {
+                    return true;
                     ret = httpClient.CreateRole(account, loginKey, "LR");
                     if (ret != 200)
                     {
@@ -43,7 +44,7 @@ namespace client
                 }
                 else if (ret != 200)
                 {
-                    //Console.WriteLine("登录异常:" + ret);
+                    Console.WriteLine("登录异常:" + ret);
                 }
                 break;
             }

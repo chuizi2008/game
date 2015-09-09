@@ -12,7 +12,7 @@ namespace client
     {
         MD5 md5 = new MD5CryptoServiceProvider();
 
-        public int Login(string account, string password, ref string strRet)
+        public int Login(string account, string password, string serverID, ref string strRet)
         {
             try
             {
@@ -21,7 +21,7 @@ namespace client
                 MD5 md5 = new MD5CryptoServiceProvider();
                 byte[] output = md5.ComputeHash(result);
                 password = BitConverter.ToString(output).Replace("-", "");
-                HttpWebRequest httpRequest = WebRequest.Create("http://192.168.1.191:8080/Login?acc=" + account + "&pass=" + password) as HttpWebRequest;
+                HttpWebRequest httpRequest = WebRequest.Create("http://192.168.1.191:8080/Login?acc=" + account + "&pass=" + password + "&serverID=" + serverID) as HttpWebRequest;
                 httpRequest.Timeout = 2000;
                 httpRequest.Method = "GET";
                 HttpWebResponse httpResponse = (HttpWebResponse)httpRequest.GetResponse();
@@ -39,7 +39,7 @@ namespace client
             }
             catch (Exception err)
             {
-                //Console.WriteLine(err.Message);
+                Console.WriteLine(err.Message);
                 return 0;
             }
         }
@@ -48,7 +48,7 @@ namespace client
         {
             try
             {
-                HttpWebRequest httpRequest = WebRequest.Create("http://192.168.1.191:8080/CreateAccount?acc=" + account + "&pass=" + password) as HttpWebRequest;
+                HttpWebRequest httpRequest = WebRequest.Create("http://192.168.1.191:8080/Create?acc=" + account + "&pass=" + password) as HttpWebRequest;
                 httpRequest.Timeout = 2000;
                 httpRequest.Method = "GET";
                 HttpWebResponse httpResponse = (HttpWebResponse)httpRequest.GetResponse();
