@@ -47,6 +47,7 @@
     <Compile Include="HTTP.cs" />
     <Compile Include="MsgManager\Chat.cs" />
     <Compile Include="MsgManager\Login.cs" />
+    <Compile Include="MsgManager\Logout.cs" />
     <Compile Include="MsgManager\NetMessageIds.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

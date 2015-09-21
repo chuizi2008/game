@@ -15,6 +15,7 @@ namespace client.MsgManager
             {
                 tcp.gameState.SetState(ELoginState.Login_ERR);
                 Console.WriteLine("登陆失败(errno:" + ret + ")");
+                CountNum.AddErr(1);
             }
             else
             {

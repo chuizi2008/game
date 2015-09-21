@@ -135,7 +135,7 @@ namespace client
             {
                 // 这里应该是半路突然被XX掉了的
                 // 所以暂时先直接放弃收到的消息，反正发不出去
-                // Console.WriteLine(err.Message);
+                Console.WriteLine(err.Message);
             }
             finally
             {

@@ -6,17 +6,18 @@ var cluster = require('cluster');
 var numCPUs = require('os').cpus().length;
 var config = require("./config.json");
 var redis = require("./lib/cache");
+var OtherManager = require("./Manager/OtherManager");
 
 var sessionTimeout = 10080 * 60;
 var n = 0;
 
 if (cluster.isMaster) 
 {
+	var workerManager = new Array();
+	
 	// Fork workers.
 	for (var i = 0; i < numCPUs; i++) 
-	{
-		cluster.fork();
-	}
+		workerManager[i] = cluster.fork();
 
 	cluster.on('fork', function(worker) 
 	{
@@ -30,13 +31,38 @@ if (cluster.isMaster)
 		cluster.fork();			
 	});
 	
+	// master进程 接收消息 -> 处理 -> 发送回信
+	cluster.on('online', function (worker) 
+	{
+		// 有worker进程建立，即开始监听message事件
+		worker.on('message', function(msg) 
+		{
+			if (msg == null)
+				return;
+			
+			if (msg.cmd == 'Broadcast' || msg.cmd == 'Login')
+			{
+				for (var n = 0; n < workerManager.length; n++) 
+				{
+					try
+					{
+						workerManager[n].send(msg);
+					}
+					catch (err)
+					{
+						console.log(err);
+					}
+				}
+			}
+		});
+	});
+	
 	// 设置时间回调，确保每隔一分钟，发送心跳请求给帐号服务器，注册自己
 	Ping();
-	var oneSecond = 1000 * 60; // one second = 1000 x 1 ms
+	var oneSecond = 1000 * 60 * 1; // one second = 1000 x 1 ms
 	setInterval(function() 
 	{
 		Ping();
-		console.log('Hello there');
 	}, oneSecond);
 }
 else
@@ -49,6 +75,22 @@ else
 	    var TcpServer = require("./fight/TCPServer");
 	    var server4Client = new TcpServer(8088, serverName);
 	    server4Client.Start(serverName);
+		server4Client.WorkerID = cluster.worker.id;
+		
+		// 父进程的刷新服务器配置消息
+		process.on('message', function(msg) 
+		{
+			if (msg.cmd == 'Broadcast')
+				server4Client.Broadcast(msg.type, msg.account, msg.info);
+			else if (msg.cmd == 'Login')
+				server4Client.CheckLogin(msg);
+		});
+		
+		var oneSecond = 1000 * 20 * 1; // one second = 1000 x 1 ms
+		setInterval(function() 
+		{
+			server4Client.ShowOnlineNum();
+		}, oneSecond);
 	});
 }
 
@@ -58,8 +100,21 @@ function Ping()
 	strUrl += "&serverIP=" + config.serverIP + "&serverPORT=" + config.serverPORT;
 	strUrl += "&redisIP=" + config.redisIP + "&redisPORT=" + config.redisPORT;
 
-	http.get(strUrl).on('error', function(e) { 
-		console.log("帐号服务器连接失败   Got error: " + e.message); 
+	// 我对下面这种写法感觉好恶心~~~
+	http.get(strUrl, function(res)
+	{                                                                                                                      
+		res.on('data', function(chunk)
+		{
+			// get之后的数据返回
+		}).on('error', function(err)
+		{
+			console.log("帐号服务器连接失败   Got error: " + err); 
+		}).on('end', function()
+		{
+			console.log("帐号服务器Ping成功"); 
+		});
+	}).on('error', function(err) {
+		console.log("帐号服务器连接失败   Got error: " + err); 
 	});
 }
 

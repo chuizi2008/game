@@ -1,9 +1,14 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace />
-  <MonoDevelop.Ide.Workbench ActiveDocument="E:\hdxx_client\hdxxFramework\Assets\Slua\LuaObject\Custom\Lua_TextMonterManager_TextMonter.cs">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Script\Logic\WebViewTest.cs">
     <Files>
-      <File FileName="E:\hdxx_client\hdxxFramework\Assets\Slua\LuaObject\Custom\Lua_AudioManader.cs" Line="175" Column="1" />
-      <File FileName="E:\hdxx_client\hdxxFramework\Assets\Slua\LuaObject\Custom\Lua_TextMonterManager_TextMonter.cs" Line="569" Column="44" />
+      <File FileName="Assets\Script\Logic\UIPageManager.cs" Line="1" Column="1" />
+      <File FileName="Assets\Script\Logic\Launch.cs" Line="18" Column="43" />
+      <File FileName="Assets\Script\Logic\GameState.cs" Line="1" Column="1" />
+      <File FileName="Assets\Script\UI\UI_LoginPanel.cs" Line="1" Column="1" />
+      <File FileName="Assets\Script\UI\UI_MessageBox.cs" Line="1" Column="1" />
+      <File FileName="Assets\Script\Logic\GetGPS.cs" Line="1" Column="1" />
+      <File FileName="Assets\Script\Logic\WebViewTest.cs" Line="11" Column="4" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

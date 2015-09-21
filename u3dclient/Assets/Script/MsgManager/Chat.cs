@@ -1,5 +1,4 @@
-﻿using UnityEngine;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,11 +23,11 @@ namespace client.MsgManager
                 callBack(info);
         }
 
-        public static void SendMsg_MSG_CHAT(TcpHandle client, string data)
+        public static void SendMsg_MSG_CHAT(TcpHandle client, string info)
         {
             WriteMsg msg = new WriteMsg((UInt16)MsgIds.MSG_CHAT);
             msg.WriteUInt16(1);
-            msg.WriteString(data);
+            msg.WriteString(info);
             client.Send(msg);
         }
     }

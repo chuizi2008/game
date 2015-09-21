@@ -23,8 +23,12 @@ namespace client.MsgManager
                 callBack(info);
         }
 
-        public static void SendMsg_MSG_CHAT()
+        public static void SendMsg_MSG_CHAT(TcpHandle client, string info)
         {
+            WriteMsg msg = new WriteMsg((UInt16)MsgIds.MSG_CHAT);
+            msg.WriteUInt16(1);
+            msg.WriteString(info);
+            client.Send(msg);
         }
     }
 }

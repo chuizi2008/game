@@ -1,10 +1,57 @@
 var formidable = require('formidable');
+// var md5 = require("../lib/md5");
 var OtherManager = require("../Manager/OtherManager");
 var MySQLManager = require("../Manager/MySQLManager");
-var md5 = require("../lib/md5");
 var regServer = require("./RegServer");
 
-function Recv(req, res, params) 
+function Redis_Create( serverInfo, account, res )
+{
+	var roleObj = new Object;
+	roleObj.Account = account;
+	roleObj.LoginKey = OtherManager.GetLoginKey();
+	
+	serverInfo.redis.hmset('account', 'acc_' + account, JSON.stringify(roleObj), function(error1)
+	{
+		try 
+		{
+			if (error1) 
+			{
+				console.log(error);
+				OtherManager.OutRet(res, 0, "");
+				return;
+			}
+			
+			OtherManager.OutRet(res, 200, roleObj.LoginKey);
+		}
+		catch (error2) 
+		{
+			console.log(error2.stack);
+			OtherManager.OutRet(res, 0, "");
+		}
+	});
+}
+
+function Redis_Login( serverInfo, account, res )
+{
+	// 连接到对应的REDIS数据库，重新设置新的LoginKey
+	serverInfo.redis.hget('account', 'acc_' + account, function (error, responseObj)
+	{
+		var roleObj;
+			
+		// 获取缓存失败
+		if (error)
+		{
+			console.log(error);
+			OtherManager.OutRet(res, 0, "");
+			return;
+		}
+			
+		Redis_Create(serverInfo, account, res);
+	});
+}
+
+
+function Recv(req, res, params, serverList) 
 {
 	var account = params.query.acc;
 	// var password = faultylabs.MD5(params.query.pass)
@@ -30,7 +77,7 @@ function Recv(req, res, params)
 			OtherManager.OutRet(res, 1, "");
 			return;
 		}
-
+		
 		// 检测对应的服务器开么开
 		var info = regServer.GetServerInfo(serverID);
 		if (info == null)
@@ -39,51 +86,8 @@ function Recv(req, res, params)
 			OtherManager.OutRet(res, 4, "");
 			return;
 		}
-
-		// 连接到对应的REDIS数据库，重新设置新的LoginKey
-		info.redis.hget('account', 'acc_' + account, function (error, responseObj)
-		{
-			var roleObj;
-			
-			// 获取缓存失败
-			if (error)
-			{
-				console.log(error);
-				OtherManager.OutRet(res, 0, "");
-				return;
-			}
-			
-			if (OtherManager.IsNullOrEmpty(responseObj))
-			{
-				console.log('[' + account + ']帐号并不存在');
-				OtherManager.OutRet(res, 1, "");
-				return;
-			}
-			
-			roleObj = JSON.parse(responseObj);
-
-			// 登录成功后，设置LoginKey
-			roleObj.LoginKey = OtherManager.GetLoginKey();
-			info.redis.hmset('account', 'acc_' + account, JSON.stringify(roleObj), function(error1)
-			{
-				try 
-				{
-					if (error1) 
-					{
-						console.log(error);
-						OtherManager.OutRet(res, 0, "");
-						return;
-					}
-					
-					OtherManager.OutRet(res, 200, roleObj.LoginKey);
-				}
-				catch (error2) 
-				{
-					console.log(error2.stack);
-					OtherManager.OutRet(res, 0, "");
-				}
-			});
-		});
+	
+		Redis_Login(info, account, res);
 	});
 }
 

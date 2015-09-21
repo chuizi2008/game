@@ -1,4 +1,5 @@
-﻿using System;
+﻿using UnityEngine;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,7 +23,7 @@ namespace client
                 byte[] output = md5.ComputeHash(result);
                 password = BitConverter.ToString(output).Replace("-", "");
                 HttpWebRequest httpRequest = WebRequest.Create("http://192.168.1.191:8080/Login?acc=" + account + "&pass=" + password) as HttpWebRequest;
-                httpRequest.Timeout = 2000;
+                httpRequest.Timeout = 20000;
                 httpRequest.Method = "GET";
                 HttpWebResponse httpResponse = (HttpWebResponse)httpRequest.GetResponse();
                 if ((int)httpResponse.StatusCode == 200)
@@ -37,8 +38,8 @@ namespace client
             }
             catch (Exception err)
             {
-                Console.WriteLine(err.Message);
-                return 0;
+				Debug.Log(err.Message);
+                return -1;
             }
         }
 
@@ -47,7 +48,7 @@ namespace client
             try
             {
                 HttpWebRequest httpRequest = WebRequest.Create("http://192.168.1.191:8080/CreateAccount?acc=" + account + "&pass=" + password) as HttpWebRequest;
-                httpRequest.Timeout = 2000;
+                httpRequest.Timeout = 20000;
                 httpRequest.Method = "GET";
                 HttpWebResponse httpResponse = (HttpWebResponse)httpRequest.GetResponse();
                 int status = (int)httpResponse.StatusCode;

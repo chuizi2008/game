@@ -4,13 +4,45 @@ var redis = require("../lib/cache");
 var OtherManager = require("../Manager/OtherManager");
 var LuaManager = require("../Manager/LuaManager");
 var NetConfiguration = require("./MsgManager/NetConfiguration");
+var SendBuffer = require("../lib/SendBuffer");
+var msgID = require('./MsgManager/NetMessageIds');
+var msg_Chat = require('./MsgManager/msg_Chat');
 
 function TcpServer(nPort, name)
 {
 	this.port = nPort;
 	this.serverName = name;
-	this.ClientTable = {};
+	this.ClientTable = new Object();
 	this.MsgManager = OtherManager.FindMsgInDirectory('./fight/MsgManager');
+}
+
+TcpServer.prototype.Broadcast = function (type, account, info)
+{
+	var myself = this;
+	
+	try
+	{
+		var utf8Len = Buffer.byteLength(info, 'utf8');
+		if (utf8Len == 0)
+			return;
+		
+		// type 2 消息类型(1:系统 2:密聊)
+		var msgLen = 2 + 2 + utf8Len;
+		var msgBuff = new SendBuffer(msgLen, msgID.MSG_CHAT);
+		msgBuff.WriteUInt16LE(type);
+		msgBuff.WriteString(info);
+		
+		for (var client in myself.ClientTable)
+			msgBuff.SendMsg(myself.ClientTable[client]);
+		
+		// msg_Chat.Send_Test_OK(myself.ClientTable[account]);
+		// 广播完毕，如果自己在里面就
+		// myself.DisconnectAccount(account)
+	}
+	catch (err)
+	{
+		OtherManager.ServerLog(2, err.stack);
+	}
 }
 
 TcpServer.prototype.RefreshScript = function ()
@@ -28,10 +60,26 @@ TcpServer.prototype.DisconnectAccount = function (account)
 	
 	if (myself.ClientTable[account] != null)
 	{
+		myself.ClientTable[account].destroy();
 		delete myself.ClientTable[account];
-		myself.ClientTable[account] = null;
 		myself.ClientNum--;
 	}
+}
+
+TcpServer.prototype.ShowOnlineNum = function ()
+{
+	var myself = this;
+	OtherManager.ServerLog(2, "当前在线:" + myself.ClientNum);
+}
+
+TcpServer.prototype.CheckLogin = function (msg)
+{
+	var myself = this;
+	
+	if (msg.WorkerID == myself.WorkerID)
+		return;
+
+	myself.DisconnectAccount(msg.Account);
 }
 
 // 开启服务
@@ -69,12 +117,18 @@ TcpServer.prototype.Start = function () {
             server.ServerLog(1, "当前在线人数:" + myself.ClientNum);
         });
 
+		client.on('end', function (error) {
+            server.ServerLog(1, "client closed, ip:" + client.remoteAddress);
+            // 内部打印当前人数
+            server.ServerLog(1, "当前在线人数:" + myself.ClientNum);
+        });
+		
         client.on('error', function (error) {
-            server.ServerLog(myself.serverName + ": client error: " + error + ", ip:" + client.remoteAddress);
+            server.ServerLog(3, myself.serverName + ": client error: " + error + ", ip:" + client.remoteAddress);
         });
 
         client.on('drain', function () {
-            server.ServerLog(myself.serverName + ": send data end, ip:" + client.remoteAddress);
+            server.ServerLog(3, myself.serverName + ": send data end, ip:" + client.remoteAddress);
         });
 
         //存储数据
@@ -155,11 +209,13 @@ TcpServer.prototype.Start = function () {
                     var bufferRecv = new Buffer(nMsgSize);
                     receiveBuffer.copy(bufferRecv, 0, nOffset, nOffset + nDataLen);
                     server.ServerLog(1, "received data, msgID = " + nMsgID + ", length =" + nMsgSize);
-                    try {
+                    try 
+					{
                         myself.MsgManager[nMsgID](myself, client, bufferRecv);
                     }
-                    catch (error) {
-                        console.log(colors.red(error));
+                    catch (error) 
+					{
+						server.ServerLog(2, error);
                     }
                 }
                 nOffset += nMsgSize;

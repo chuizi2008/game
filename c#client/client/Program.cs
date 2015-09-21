@@ -40,35 +40,26 @@ namespace client
     {
         [DllImport("kernel32")]
         static extern uint GetTickCount();
+        static UInt32 threadNum = 100;
+        static UInt32 loopNum = 1;
 
         static void Run(object str)
         {
-            int[] ret = new int[2];
-            ret[0] = 0;
-            ret[1] = 0;
-            for (int n = 0; n < 1; n++)
-            {
-                Game obj = new Game();
-                if (obj.Run((str as string) + n.ToString(), "1", "1"))
-                    ret[0]++;
-                else
-                    ret[1]++;
-            }
-
-            CountNum.AddOK(ret[0]);
-            CountNum.AddErr(ret[1]);
+            Game obj = new Game();
+            obj.Run(str as string, "1", "1");
         }
 
         static void Main(string[] args)
         {
-            UInt64 max = 1;
-            for (UInt64 n = 0; n < max; n++)
+            Random random = new Random();
+            for (UInt32 n = 0; n < threadNum; n++)
             {
                 Thread thread = new Thread(new ParameterizedThreadStart(Run));
-                thread.Start("chuizi100" + n);
+               //  thread.Start("chuizi" + random.Next() % 100000);
+                thread.Start("chuizi" + n);
             }
 
-            while (CountNum.GetRet() < 100 * 99)
+            while (CountNum.GetRet() < threadNum * loopNum)
             {
                 Thread.Sleep(1);
             }

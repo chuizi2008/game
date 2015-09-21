@@ -23,7 +23,10 @@ function Recv(req, res, params)
 		if (ret != null)
 			OtherManager.OutRet(res, 0, "");
 		else
+		{
 			OtherManager.OutRet(res, 200, "");
+			console.log('[' + account + ']Create OK');
+		}
 	});
 }
 

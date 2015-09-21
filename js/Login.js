@@ -135,7 +135,7 @@ function Recv_Get(req, res, params)
 		
 		if (OtherManager.IsNullOrEmpty(responseObj))
 		{
-			console.log('[' + account + ']帐号并不存在');
+			console.log('[' + account + ']帐号并不存在   ' + responseObj);
 			OtherManager.OutRet(res, 1, "");
 			return;
 		}

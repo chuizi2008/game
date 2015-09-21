@@ -27,7 +27,6 @@ function Send(client, ret)
 exports.MsgID  = msgID.MSG_LOGIN;
 exports.Recv = function(tcpServer, client, obj) 
 {
-	var myself = this;
 	var nOffset = 0;
 	
 	var len = obj.readUInt16LE(nOffset); 
@@ -91,12 +90,11 @@ exports.Recv = function(tcpServer, client, obj)
 		
 		Send(client, 1);
 		
-		console.log('login ok');
-		
-		// 广播
-		sendBroadcast.Send_Broadcast(tcpServer, 1, "欢迎新的锤子[" + Account + "]加入游戏")
-
 		// 内部打印当前人数
 		tcpServer.ServerLog(1, "当前在线人数:" + tcpServer.ClientNum);
+		
+		// 广播
+		sendBroadcast.Send_Broadcast(1, Account, "欢迎新的锤子[" + Account + "]加入游戏");
+		process.send({cmd : "Login", WorkerID : tcpServer.WorkerID, Account : roleObj.Account});
 	});
 };

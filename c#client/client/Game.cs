@@ -66,14 +66,20 @@ namespace client
             MsgManager.Chat.Reg_Fun(new MsgManager.Chat.Chat_CallBack(chatcallback));
             MsgManager.Login.SendMsg_MSG_LOGIN(tcpClient);
 
-            while (tcpClient.CheckState() == TcpHandle.EConnectState.ConnectState_GameStart)
+            try
             {
-                Thread.Sleep(100);
-                tcpClient.TickServerMsgTransfer();
+                while (tcpClient.CheckState() == TcpHandle.EConnectState.ConnectState_GameStart)
+                {
+                    Thread.Sleep(100);
+                    tcpClient.TickServerMsgTransfer();
 
-                ELoginState val = tcpClient.gameState.GetState();
-                if (val == ELoginState.Login_Close || val == ELoginState.Login_ERR)
-                    break;
+                    ELoginState val = tcpClient.gameState.GetState();
+                    if (val == ELoginState.Login_Close || val == ELoginState.Login_ERR)
+                        break;
+                }
+            }
+            catch (Exception err)
+            {
             }
 
             tcpClient.Close();

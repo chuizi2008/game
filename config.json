@@ -1,6 +1,6 @@
 {
 	"AccountIP"  : "192.168.1.191",
-	"AccountPort": "8080",
+	"AccountPort": "8880",
 	"serverID"   : "1",
 	"serverIP"   : "192.168.1.191",
 	"serverPORT" : "8088",
