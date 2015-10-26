@@ -10,6 +10,7 @@ namespace client
 {
     public class HTTP
     {
+        string httpServerIP = "http://192.168.1.232";
         MD5 md5 = new MD5CryptoServiceProvider();
 
         public int Login(string account, string password, string serverID, ref string strRet)
@@ -21,7 +22,7 @@ namespace client
                 MD5 md5 = new MD5CryptoServiceProvider();
                 byte[] output = md5.ComputeHash(result);
                 password = BitConverter.ToString(output).Replace("-", "");
-                HttpWebRequest httpRequest = WebRequest.Create("http://192.168.1.191:8080/Login?acc=" + account + "&pass=" + password + "&serverID=" + serverID) as HttpWebRequest;
+                HttpWebRequest httpRequest = WebRequest.Create(httpServerIP + ":8080/Login?acc=" + account + "&pass=" + password + "&serverID=" + serverID) as HttpWebRequest;
                 httpRequest.Timeout = 2000;
                 httpRequest.Method = "GET";
                 HttpWebResponse httpResponse = (HttpWebResponse)httpRequest.GetResponse();

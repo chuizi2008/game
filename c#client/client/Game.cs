@@ -56,7 +56,7 @@ namespace client
                 return false;
             }
 
-            TcpHandle tcpClient = new TcpHandle("192.168.1.191", 8088);
+            TcpHandle tcpClient = new TcpHandle("192.168.1.232", 8888);
             tcpClient.gameState.Account = account;
             tcpClient.gameState.LoginKey = loginKey;
 

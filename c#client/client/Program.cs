@@ -40,7 +40,7 @@ namespace client
     {
         [DllImport("kernel32")]
         static extern uint GetTickCount();
-        static UInt32 threadNum = 100;
+        static UInt32 threadNum = 1;
         static UInt32 loopNum = 1;
 
         static void Run(object str)

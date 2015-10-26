@@ -1,1 +1,0 @@
-D:\nodejs\game\c#client\client\bin\Debug\client.exe.config

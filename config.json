@@ -1,9 +1,10 @@
 {
-	"AccountIP"  : "192.168.1.191",
+	"AccountIP"  : "192.168.1.232",
 	"AccountPort": "8880",
 	"serverID"   : "1",
-	"serverIP"   : "192.168.1.191",
+	"serverIP"   : "192.168.1.232",
 	"serverPORT" : "8088",
 	"redisIP" 	 : "192.168.0.35",
-	"redisPORT"  : "6379"
+	"redisPORT"  : "6379",
+	"clientPORT" : "8888"
 }

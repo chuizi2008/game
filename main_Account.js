@@ -12,8 +12,8 @@ var createLogic = require("./AccountLogic/Create");
 var loginLogic = require("./AccountLogic/Login");
 var regServer = require("./AccountLogic/RegServer");
 
-var port_client = 8080;
-var port_server = 8880;
+var port_client = 8080;	// 客服端连接
+var port_server = 8880; // 游戏服务器连接
 var sessionTimeout = 10080 * 60;
 var serverName = "AccountServer";
 
@@ -79,7 +79,7 @@ function CreateServerManager(regServer, worker)
 	httpServer.on("listening", function() {
 	    OtherManager.ServerLog(1, "[ServerManager] listening on http://localhost:" + port_server);
 	});
-	httpServer.listen(port_server, "0.0.0.0");
+	httpServer.listen(port_server);
 }
 
 function CreateServer(serverName)
@@ -122,9 +122,9 @@ function CreateServer(serverName)
 	    OtherManager.ServerLog(3, "[" + serverName + "] HTTP_ServerError : " + err, stack);
 	});
 	httpServer.on("listening", function() {
-	    OtherManager.ServerLog(1, "[" + serverName + "] listening on http://localhost:" + port_client);
+	    OtherManager.ServerLog(1, "[" + serverName + "] Client listening on http://localhost:" + port_client);
 	});
-	httpServer.listen(port_client, "0.0.0.0");
+	httpServer.listen(port_client);
 }
 
 

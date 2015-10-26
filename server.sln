@@ -3,7 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Main", "Main", "{452E64A5-64DA-4875-984F-025B62B8E531}"
 	ProjectSection(SolutionItems) = preProject
-		main.js = main.js
+		main_Account.js = main_Account.js
+		main_Game.js = main_Game.js
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "js", "js", "{8DDFE01A-4757-4C9B-9875-785B9BDBB429}"
